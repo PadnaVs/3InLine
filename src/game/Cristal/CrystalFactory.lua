@@ -39,7 +39,7 @@ function CrystalFactory.create(type, customParams)
         customParams.strColor = getRandomColor()
     end
     
-    return config.class.new(unpack(customParams))
+    return config.class.new(customParams.strColor)
 end
 
 return CrystalFactory

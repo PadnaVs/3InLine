@@ -1,25 +1,56 @@
-﻿
-local GameField = require "src.game.GameField"
+﻿local View = {}
 
-local View = {}
-
-function View.new()
+function View.new(gameFieldInstance)
     local self = 
     {
-        m_gameFild = {};
+        m_gameField = gameFieldInstance  -- Сохраняем переданный экземпляр
     }
 
-    setmetatable(self,{ __index = View })
-
-    return self
+    setmetatable(self, { __index = View })
+return self
 end
 
-function View:setGameFild(gameFild)
-    self.m_gameFild = gamefild;
+function split(str, sep)
+    local parts = {}
+    for part in str:gmatch("[^"..sep.."]+") do
+        table.insert(parts, part)
+    end
+    return parts
+end
+
+function GetDataInput(strInput)
+    local dataInput = 
+    {
+        m_strEvent = "",
+        m_nX = -1,
+        m_nY = -1,
+        m_strDirection = ""
+    }
+
+    local strData = split(strInput, " ")
+
+    dataInput.m_strEvent = strData[1]
+    dataInput.m_nX = tonumber(strData[2])
+    dataInput.m_nY = tonumber(strData[3])
+    dataInput.m_strDirection = strData[4]
+
+    return dataInput
 end
 
 function View:start()
-    
+    self.m_gameField:init()
+
+    while true do
+        print("Pls input command for game: evt, x, y, dir.")
+        local strInput = io.read()
+        if(strInput == "Exit") then
+            return
+        elseif strInput ~= "" then
+            local dataInput = GetDataInput(strInput) 
+        end
+    end
+
+    self:printGameFild()
 end
 
 function View:clearConsole()
@@ -27,6 +58,19 @@ function View:clearConsole()
         os.execute("cls")
     else  -- Unix-like (Linux, macOS)
         os.execute("clear")
+    end
+end
+
+function View:printGameFild()
+    self:clearConsole()
+
+    local sizeFild = self.m_gameField.m_nSize
+    
+    for i = 1, sizeFild do
+        for j = 1, sizeFild do
+            io.write(self.m_gameField:GetStrColorCell(i, j))
+        end
+        io.write("\n")
     end
 end
 

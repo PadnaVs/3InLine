@@ -4,7 +4,9 @@
 --********************************
 
 local View = require "src.view.View"
+local GameFild = require "src.game.GameField"
 
-local view = View.new();
+local gameFild = GameFild.new()
 
-view.clearConsole();
+local view = View.new(gameFild)
+view:start()

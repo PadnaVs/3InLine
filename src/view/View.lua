@@ -3,7 +3,8 @@
 function View.new(gameFieldInstance)
     local self = 
     {
-        m_gameField = gameFieldInstance  -- Сохраняем переданный экземпляр
+        m_gameField = gameFieldInstance,
+        m_mediatr = {}
     }
 
     setmetatable(self, { __index = View })
@@ -21,10 +22,10 @@ end
 function GetDataInput(strInput)
     local dataInput = 
     {
-        m_strEvent = "",
+        m_strEvent = '',
         m_nX = -1,
         m_nY = -1,
-        m_strDirection = ""
+        m_strDirection = ''
     }
 
     local strData = split(strInput, " ")
@@ -37,20 +38,28 @@ function GetDataInput(strInput)
     return dataInput
 end
 
+function View:OnEvent(strEvent)
+    if strEvent == "eventDrawField" then
+        self:printGameFild()
+    end
+end
+
 function View:start()
     self.m_gameField:init()
-
+    
     while true do
         print("Pls input command for game: evt, x, y, dir.")
         local strInput = io.read()
         if(strInput == "Exit") then
             return
         elseif strInput ~= "" then
-            local dataInput = GetDataInput(strInput) 
+            local dataInput = GetDataInput(strInput)
+
+            if dataInput.m_strEvent == 'm' then
+                self.m_mediator:OnNotify("eventMoveCristal", self, dataInput)
+            end
         end
     end
-
-    self:printGameFild()
 end
 
 function View:clearConsole()
@@ -70,8 +79,12 @@ function View:printGameFild()
         for j = 1, sizeFild do
             io.write(self.m_gameField:GetStrColorCell(i, j))
         end
-        io.write("\n")
+        io.write('\n')
     end
+
+    print('\n')
+
+    os.execute("timeout /T " .. 1 .. " /NOBREAK > NUL")
 end
 
 return View

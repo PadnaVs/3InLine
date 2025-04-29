@@ -4,9 +4,14 @@
 --********************************
 
 local View = require "src.view.View"
-local GameFild = require "src.game.GameField"
+local GameField = require "src.game.GameField"
+local Mediator = require "src.mediator.Mediator"
 
-local gameFild = GameFild.new()
+local gameField = GameField.new()
+local view = View.new(gameField)
 
-local view = View.new(gameFild)
+local mediator = Mediator.new()
+mediator:SetGameField(gameField)
+mediator:SetView(view)
+
 view:start()

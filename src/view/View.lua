@@ -1,4 +1,4 @@
-﻿local View = {}
+local View = {}
 
 function View.new(gameFieldInstance)
     local self = 
@@ -77,7 +77,7 @@ function View:printGameFild()
     
     for i = 1, sizeFild do
         for j = 1, sizeFild do
-            io.write(self.m_gameField:GetStrColorCell(i, j))
+            io.write(self.m_gameField:GetStrColorCell(j, i))
         end
         io.write('\n')
     end

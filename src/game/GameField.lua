@@ -1,4 +1,4 @@
-﻿local CrystalFactory = require("src.game.Cristal.CrystalFactory")
+local CrystalFactory = require("src.game.Cristal.CrystalFactory")
 
 local GameField = {}
 
@@ -22,7 +22,7 @@ end
 
 function GameField:OnEvent(strEvent, data)
     if strEvent == "eventMoveCristal" then
-        self:MoveCrystal(data)
+        self:OnMoveCrystal(data)
         self:OnDrawField()
     end
 end
@@ -35,7 +35,7 @@ function getOtherCrystal(x, y, dir)
 
     if dir == 't' then
         otherCoord.m_nY = y - 1
-    elseif dir == 'b' then
+    elseif dir == 'd' then
         otherCoord.m_nY = y + 1
     elseif dir == 'l' then
         otherCoord.m_nX = x - 1
@@ -46,35 +46,130 @@ function getOtherCrystal(x, y, dir)
     return otherCoord
 end
 
-function GameField:DellCrystal(x, y, dir)
+function GameField:MoveCrystal(x, y, dir)
+    local crystal = self:GetCrystal(x, y)
+
     local otherCoord = getOtherCrystal(x, y, dir)
-    
-    local startX = x
-    if x < otherCoord.m_nX then
-        startX = x
-    else
-        startX = otherCoord.m_nX
-    end
 
-    local startY = y
-    if y < otherCoord.m_nY then
-        startY = y
-    else
-        startY = otherCoord.m_nY
-    end
+    local crystal2 = self:GetCrystal(otherCoord.m_nX, otherCoord.m_nY)
 
-    local x11 = self:GetStrColorCell(startY, startX-1);
-    local x12 = self:GetStrColorCell(startY, startX);
-    local x13 = self:GetStrColorCell(startY, startX+1);
+    local strColorTmp = crystal:GetStrColor()
+    crystal:SetStrColor(crystal2:GetStrColor())
+    crystal2:SetStrColor(strColorTmp)
 
-    local y11 = self:GetStrColorCell(startX, startY);
-    local y12 = self:GetStrColorCell(startX, startY);
-    local y13 = self:GetStrColorCell(startX, startY);
-
-    local blockY = {};
+    self:OnDrawField()
 end
 
-function GameField:MoveCrystal(dataMove)
+function GameField:GetCrossForCheckForCtystall(x, y)
+    local block = 
+    {
+        { self:GetStrColorCell(x-2, y), self:GetStrColorCell(x-1, y), self:GetStrColorCell(x, y), self:GetStrColorCell(x+1, y), self:GetStrColorCell(x+2, y) },
+        { self:GetStrColorCell(x, y-2), self:GetStrColorCell(x, y-1), self:GetStrColorCell(x, y), self:GetStrColorCell(x, y+1), self:GetStrColorCell(x, y+2) } 
+    }
+
+    return block
+end
+
+function checkNeedDellCrystalAfterMove(data, strType)
+    local count = 1
+    for i = 1, #data do
+        if i == 3 then
+            ::continue::
+        else
+            if strType == data[i] then
+                count = count + 1
+            else
+                count = 1
+            end
+            if count >= 3 then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+function GameField:DellCrystalAfteMove(x, y)    
+    local res = false
+
+    local strTypeCrystal = self:GetStrColorCell(x, y)
+    local crossForCheck = self:GetCrossForCheckForCtystall(x, y)
+    
+    if checkNeedDellCrystalAfterMove(crossForCheck[1], strTypeCrystal) or checkNeedDellCrystalAfterMove(crossForCheck[2], strTypeCrystal) then 
+        res = true
+        
+        local step = 0
+        local xlStrType = strTypeCrystal
+        local ylStrType = strTypeCrystal
+        local xrStrType = strTypeCrystal
+        local yrStrType = strTypeCrystal
+
+        local xlAllDel = false
+        local xrAllDel = false
+        local ylAllDel = false
+        local yrAllDel = false
+        
+        while xlStrType == strTypeCrystal or ylStrType == strTypeCrystal or xrStrType == strTypeCrystal or yrStrType == strTypeCrystal do
+            local xL = x - step
+            local yL = y - step
+            local xR = x + step
+            local yR = y + step
+
+            if xL == xR and yL == yR then
+                self:DeleteCell(xL, yL)
+            else
+                if xlAllDel == false then
+                    xlStrType = self:GetStrColorCell(xL, y)
+                end
+                
+                if xlStrType == strTypeCrystal and xlAllDel == false then
+                    self:DeleteCell(xL, y)
+               else
+                    xlAllDel = true
+                end
+
+                if xrAllDel == false then
+                    xrStrType = self:GetStrColorCell(xR, y)
+                end
+                
+                if xrStrType == strTypeCrystal and xrAllDel == false then
+                    self:DeleteCell(xR, y)
+                else
+                    xrAllDel = true
+                end
+
+                if ylAllDel == false then
+                    ylStrType = self:GetStrColorCell(x, yL)
+                end
+                
+                if ylStrType == strTypeCrystal and ylAllDel == false then
+                    self:DeleteCell(x, yL)
+                else
+                    ylAllDel = true
+                end
+
+                if yrAllDel == false then
+                    yrStrType = self:GetStrColorCell(x, yR)
+                end
+                
+                if yrStrType == strTypeCrystal and yrAllDel == false then
+                    self:DeleteCell(x, yR)
+                else
+                    yrAllDel = true
+                end
+            end
+
+            step = step + 1
+        end
+    end 
+    
+    self:OnDrawField()
+
+    return res
+end
+
+function GameField:OnMoveCrystal(dataMove)
     local x = dataMove.m_nX
     local y = dataMove.m_nY
 
@@ -89,7 +184,15 @@ function GameField:MoveCrystal(dataMove)
     if(bIsNotInFild or bIsBlockLeft or bIsBlockBottom or bIsBlockLeft or bIsBlockRight) then
         return
     else
-        self:DellCrystal(x, y, dir)
+        self:MoveCrystal(x, y, dir)
+        local isDel1 = self:DellCrystalAfteMove(x, y)
+        
+        local othXY = getOtherCrystal(x, y, dir)
+        local isDel2 = self:DellCrystalAfteMove(othXY.m_nX, othXY.m_nY)
+
+        if isDel1 == false and isDel2 == false then
+            self:MoveCrystal(x, y, dir)
+        end
     end
 end
 
@@ -105,9 +208,29 @@ function GameField:init()
     self:OnDrawField()
 end
 
-function GameField:GetStrColorCell(y, x)
-    if x > 0 or y > 0 or x < 11 or y < 11 then 
-        return self.m_fild[y][x]:GetStrColor()
+function GameField:GetCrystal(x, y)
+    local strRes = " "
+    if x > 0 and y > 0 and x < 11 and y < 11 then
+        if self.m_fild[y][x] ~= nil then
+            strRes = self.m_fild[y][x]
+        end
+    end
+    return strRes
+end
+
+function GameField:GetStrColorCell(x, y)
+    local strRes = " "
+    if x > 0 and y > 0 and x < 11 and y < 11 then
+        if self.m_fild[y][x] ~= nil then
+            strRes = self.m_fild[y][x]:GetStrColor()
+        end
+    end
+    return strRes
+end
+
+function GameField:DeleteCell(x, y)
+    if x > 0 and y > 0 and x < 11 and y < 11 then 
+        self.m_fild[y][x] = nil
     end
 end
 

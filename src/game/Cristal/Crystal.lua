@@ -15,4 +15,8 @@ function Crystal:GetStrColor()
     return self.m_strColor
 end
 
+function Crystal:SetStrColor(strColor)
+    self.m_strColor = strColor
+end
+
 return Crystal

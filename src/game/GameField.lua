@@ -95,13 +95,25 @@ function checkNeedDellCrystalAfterMove(data, strType)
     return false
 end
 
+function GameField:CheckPossibilityDeletion(x, y, strTypeCrystal)
+    local res = false
+    
+    local crossForCheck = self:GetCrossForCheckForCtystall(x, y)
+    
+    if checkNeedDellCrystalAfterMove(crossForCheck[1], strTypeCrystal) or checkNeedDellCrystalAfterMove(crossForCheck[2], strTypeCrystal) then 
+        res = true
+    end
+
+    return res
+end
+
 function GameField:DellCrystalAfteMove(x, y)    
     local res = false
 
     local strTypeCrystal = self:GetStrColorCell(x, y)
     local crossForCheck = self:GetCrossForCheckForCtystall(x, y)
     
-    if checkNeedDellCrystalAfterMove(crossForCheck[1], strTypeCrystal) or checkNeedDellCrystalAfterMove(crossForCheck[2], strTypeCrystal) then 
+    if self:CheckPossibilityDeletion(x, y, strTypeCrystal) then 
         res = true
         
         local step = 0
@@ -246,6 +258,25 @@ function GameField:LowerCrystalDown(x, y)
     end
 end
 
+function GameField:Mix()
+    self.m_fild = {}
+
+    local size = self.m_nSize
+    for i = 1, size do
+        self.m_fild[i] = {}
+        for j = 1, size do
+            while self.m_fild[i][j] ~= nil do
+                self.m_fild[i][j] = CrystalFactory.create("base")
+                
+                local strColorTypeCrystalTmp = self.GetStrColorCell(j, i)
+                if self:CheckPossibilityDeletion(j, i, strColorTypeCrystalTmp) then
+                    self:DeleteCell(j, i)
+                end
+            end
+        end
+    end
+end
+
 function GameField:tick()
     local isDel = true
     while isDel do
@@ -271,6 +302,21 @@ function GameField:tick()
     end
 
     self:dump()
+
+    local isMix = true
+    for i = 1, 10 do
+        for j = 1, 10 do
+            local strColorTypeCrystalTmp = self:GetStrColorCell(j, i);
+            if self:CheckPossibilityDeletion(j, i, strColorTypeCrystalTmp) then
+                isMix = false
+            end
+        end
+    end
+
+    if isMix then
+       self:Mix()
+       self:dump()
+    end
 end
 
 function GameField:init()

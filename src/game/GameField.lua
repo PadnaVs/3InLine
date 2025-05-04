@@ -1,3 +1,4 @@
+﻿
 local CrystalFactory = require("src.game.Cristal.CrystalFactory")
 
 local GameField = {}
@@ -71,6 +72,10 @@ function GameField:GetCrossForCheckForCtystall(x, y)
 end
 
 function checkNeedDellCrystalAfterMove(data, strType)
+    if strType == " " then
+        return false
+    end
+    
     local count = 1
     for i = 1, #data do
         if i == 3 then
@@ -164,8 +169,6 @@ function GameField:DellCrystalAfteMove(x, y)
         end
     end 
     
-    self:OnDrawField()
-
     return res
 end
 
@@ -192,8 +195,80 @@ function GameField:OnMoveCrystal(dataMove)
 
         if isDel1 == false and isDel2 == false then
             self:MoveCrystal(x, y, dir)
+        else
+            for i = 1, self.m_nSize do
+                self:LowerCrystalDown(i, 1)
+            end
+
+            self:tick()
         end
     end
+end
+
+function GameField:LowerCrystalDown(x, y)
+    local yDown = -1
+
+    for i = 1, self.m_nSize do
+        local strColorTypeCrystalTmp = self:GetStrColorCell(x, i);
+        if strColorTypeCrystalTmp == " " then
+            yDown = i
+        end
+    end
+
+    if yDown == -1 then
+        return
+    end
+
+    local arrCollumn = {}
+    for i = yDown, 1, -1 do
+        local strColorTypeCrystalTmp = self:GetStrColorCell(x, i);
+        if strColorTypeCrystalTmp ~= " " then
+            arrCollumn[#arrCollumn+1] = strColorTypeCrystalTmp
+            self:DeleteCell(x, i) 
+        end
+    end
+
+    for i = yDown, 1, -1 do
+        local strColorTypeCrystalTmp = " "
+        if #arrCollumn >= 1 then
+            strColorTypeCrystalTmp = arrCollumn[1]
+            table.remove(arrCollumn, 1)
+        end
+        
+        if strColorTypeCrystalTmp ~= " " then
+            local customParams = { strColor = strColorTypeCrystalTmp }
+            self.m_fild[i][x] = CrystalFactory.create("base", customParams)
+        else
+            self.m_fild[i][x] = CrystalFactory.create("base")
+        end
+    end
+end
+
+function GameField:tick()
+    local isDel = true
+    while isDel do
+        local isDelTmp = false
+
+        for i = 1, self.m_nSize do
+            for j = 1, self.m_nSize do
+                if self:DellCrystalAfteMove(j, i) then
+                    isDelTmp = true
+                end
+            end
+        end
+
+        if isDelTmp then
+            self:OnDrawField()
+
+            for i = 1, self.m_nSize do
+                self:LowerCrystalDown(i, 1)
+            end
+        else
+            isDel = false
+        end
+    end
+
+    self:OnDrawField()
 end
 
 function GameField:init()
@@ -206,6 +281,8 @@ function GameField:init()
     end
 
     self:OnDrawField()
+
+    self:tick()
 end
 
 function GameField:GetCrystal(x, y)
@@ -229,8 +306,10 @@ function GameField:GetStrColorCell(x, y)
 end
 
 function GameField:DeleteCell(x, y)
-    if x > 0 and y > 0 and x < 11 and y < 11 then 
-        self.m_fild[y][x] = nil
+    if x > 0 and y > 0 and x < 11 and y < 11 then
+        if self.m_fild[y][x] ~= nil then 
+            self.m_fild[y][x] = nil
+        end
     end
 end
 

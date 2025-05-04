@@ -1,4 +1,4 @@
-local View = {}
+﻿local View = {}
 
 function View.new(gameFieldInstance)
     local self = 

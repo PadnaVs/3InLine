@@ -196,6 +196,8 @@ function GameField:OnMoveCrystal(dataMove)
         if isDel1 == false and isDel2 == false then
             self:MoveCrystal(x, y, dir)
         else
+            self:dump()
+
             for i = 1, self.m_nSize do
                 self:LowerCrystalDown(i, 1)
             end

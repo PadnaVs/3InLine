@@ -17,14 +17,14 @@ function GameField.new()
     return self
 end
 
-function GameField:OnDrawField()
+function GameField:dump()
     self.m_mediator:OnNotify("eventDrawField", self)
 end
 
 function GameField:OnEvent(strEvent, data)
     if strEvent == "eventMoveCristal" then
         self:OnMoveCrystal(data)
-        self:OnDrawField()
+        self:dump()
     end
 end
 
@@ -58,7 +58,7 @@ function GameField:MoveCrystal(x, y, dir)
     crystal:SetStrColor(crystal2:GetStrColor())
     crystal2:SetStrColor(strColorTmp)
 
-    self:OnDrawField()
+    self:dump()
 end
 
 function GameField:GetCrossForCheckForCtystall(x, y)
@@ -258,7 +258,7 @@ function GameField:tick()
         end
 
         if isDelTmp then
-            self:OnDrawField()
+            self:dump()
 
             for i = 1, self.m_nSize do
                 self:LowerCrystalDown(i, 1)
@@ -268,7 +268,7 @@ function GameField:tick()
         end
     end
 
-    self:OnDrawField()
+    self:dump()
 end
 
 function GameField:init()
@@ -280,7 +280,7 @@ function GameField:init()
         end
     end
 
-    self:OnDrawField()
+    self:dump()
 
     self:tick()
 end

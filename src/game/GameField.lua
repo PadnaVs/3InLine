@@ -49,16 +49,19 @@ end
 
 function GameField:MoveCrystal(x, y, dir)
     local crystal = self:GetCrystal(x, y)
+    if crystal == nil then
+        return
+    end
 
     local otherCoord = getOtherCrystal(x, y, dir)
-
     local crystal2 = self:GetCrystal(otherCoord.m_nX, otherCoord.m_nY)
+    if crystal2 == nil then
+        return
+    end
 
     local strColorTmp = crystal:GetStrColor()
     crystal:SetStrColor(crystal2:GetStrColor())
     crystal2:SetStrColor(strColorTmp)
-
-    self:dump()
 end
 
 function GameField:GetCrossForCheckForCtystall(x, y)
@@ -111,8 +114,7 @@ function GameField:DellCrystalAfteMove(x, y)
     local res = false
 
     local strTypeCrystal = self:GetStrColorCell(x, y)
-    local crossForCheck = self:GetCrossForCheckForCtystall(x, y)
-    
+
     if self:CheckPossibilityDeletion(x, y, strTypeCrystal) then 
         res = true
         
@@ -200,6 +202,7 @@ function GameField:OnMoveCrystal(dataMove)
         return
     else
         self:MoveCrystal(x, y, dir)
+        self:dump()
         local isDel1 = self:DellCrystalAfteMove(x, y)
         
         local othXY = getOtherCrystal(x, y, dir)
@@ -207,12 +210,15 @@ function GameField:OnMoveCrystal(dataMove)
 
         if isDel1 == false and isDel2 == false then
             self:MoveCrystal(x, y, dir)
+            self:dump()
         else
             self:dump()
 
             for i = 1, self.m_nSize do
                 self:LowerCrystalDown(i, 1)
             end
+            
+            self:dump()
 
             self:tick()
         end
@@ -258,6 +264,35 @@ function GameField:LowerCrystalDown(x, y)
     end
 end
 
+function GameField:CheckPossibleMove(x, y, dir, dirRev)
+    local res = false
+    self:MoveCrystal(x, y, dir)
+    if self:CheckPossibilityDeletion(x, y, self:GetStrColorCell(x, y)) then
+        res = true
+    end
+    self:MoveCrystal(x, y, dirRev)
+
+    return res
+end
+
+function GameField:CheckMix()
+    local res = true
+    for i = 1, 10 do
+        for j = 1, 10 do
+            local lr = self:CheckPossibleMove(j, i, 'l', 'r')
+            local rl = self:CheckPossibleMove(j, i, 'r', 'l')
+            local td = self:CheckPossibleMove(j, i, 't', 'd')
+            local dt = self:CheckPossibleMove(j, i, 'd', 't')
+            
+            if lr or rl or td or dt then
+                return false
+            end
+        end
+    end
+
+    return res
+end
+
 function GameField:Mix()
     self.m_fild = {}
 
@@ -265,12 +300,16 @@ function GameField:Mix()
     for i = 1, size do
         self.m_fild[i] = {}
         for j = 1, size do
-            while self.m_fild[i][j] ~= nil do
-                self.m_fild[i][j] = CrystalFactory.create("base")
-                
-                local strColorTypeCrystalTmp = self.GetStrColorCell(j, i)
+            self.m_fild[i][j] = CrystalFactory.create("base")
+            
+            local mix = true
+            while mix do
+                local strColorTypeCrystalTmp = self:GetStrColorCell(j, i)
                 if self:CheckPossibilityDeletion(j, i, strColorTypeCrystalTmp) then
                     self:DeleteCell(j, i)
+                    self.m_fild[i][j] = CrystalFactory.create("base")
+                else
+                    mix = false
                 end
             end
         end
@@ -303,17 +342,7 @@ function GameField:tick()
 
     self:dump()
 
-    local isMix = true
-    for i = 1, 10 do
-        for j = 1, 10 do
-            local strColorTypeCrystalTmp = self:GetStrColorCell(j, i);
-            if self:CheckPossibilityDeletion(j, i, strColorTypeCrystalTmp) then
-                isMix = false
-            end
-        end
-    end
-
-    if isMix then
+    if self:CheckMix() then
        self:Mix()
        self:dump()
     end
@@ -334,7 +363,7 @@ function GameField:init()
 end
 
 function GameField:GetCrystal(x, y)
-    local strRes = " "
+    local strRes = nil
     if x > 0 and y > 0 and x < 11 and y < 11 then
         if self.m_fild[y][x] ~= nil then
             strRes = self.m_fild[y][x]
@@ -346,7 +375,7 @@ end
 function GameField:GetStrColorCell(x, y)
     local strRes = " "
     if x > 0 and y > 0 and x < 11 and y < 11 then
-        if self.m_fild[y][x] ~= nil then
+        if self.m_fild[y] ~= nil and self.m_fild[y][x] ~= nil then
             strRes = self.m_fild[y][x]:GetStrColor()
         end
     end
